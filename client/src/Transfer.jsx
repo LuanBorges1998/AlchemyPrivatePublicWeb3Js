@@ -1,5 +1,6 @@
 import { useState } from "react";
 import server from "./server";
+import CriptografiaCliente from "./criptografia_cliente";
 
 function Transfer({ address, setBalance }) {
   const [sendAmount, setSendAmount] = useState("");
@@ -7,8 +8,14 @@ function Transfer({ address, setBalance }) {
 
   const setValue = (setter) => (evt) => setter(evt.target.value);
 
+  const criptografia_cliente = new CriptografiaCliente();
+
   async function transfer(evt) {
     evt.preventDefault();
+
+    const msgHash = criptografia_cliente.hashMessage(sendAmount);
+
+    const sig = criptografia_cliente.signMessage(JSON.stringify({amount: sendAmount, recipient: recipient}), address);
 
     try {
       const {
@@ -16,6 +23,7 @@ function Transfer({ address, setBalance }) {
       } = await server.post(`send`, {
         sender: address,
         amount: parseInt(sendAmount),
+        msg: sig,
         recipient,
       });
       setBalance(balance);
